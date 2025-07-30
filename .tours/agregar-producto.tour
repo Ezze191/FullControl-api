@@ -1,0 +1,11 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Agregar Producto",
+  "steps": [
+    {
+      "file": "FullControl_front/src/app/services/productos.service.ts",
+      "description": "cramos en el servicio la funcion que va a mandar a llamar nuestra api de crear nuevos productos",
+      "line": 40
+    }
+  ]
+}
