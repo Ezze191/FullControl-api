@@ -1,0 +1,127 @@
+# ====================================================================
+# COMANDOS ACTUALIZADOS PARA EL SERVIDOR UBUNTU
+# ====================================================================
+# Problema resuelto: PHP 8.1 → PHP 8.2
+# Copiar y pegar estos comandos uno por uno
+# ====================================================================
+
+# 1. Ir al directorio del proyecto
+cd ~/FullControl-api
+
+# 2. Hacer pull de los cambios corregidos (PHP 8.2)
+git pull origin main
+
+# 3. IMPORTANTE: Limpiar Docker completamente
+docker-compose -f docker-compose.prod.yml down -v
+docker system prune -af
+
+# 4. OPCIONAL: Limpiar imágenes de Laravel anteriores
+docker rmi $(docker images | grep laravel | awk '{print $3}')
+
+# 5. Verificar archivos actualizados
+cat Dockerfile | head -2
+# Debería mostrar: FROM php:8.2-apache
+
+# 6. Ejecutar el despliegue (tomará más tiempo la primera vez con PHP 8.2)
+bash deploy.sh
+
+# ====================================================================
+# ESTE PROCESO TOMARÁ 10-15 MINUTOS porque:
+# - Descarga la imagen de PHP 8.2
+# - Instala todas las extensiones PHP
+# - Actualiza composer.lock si es necesario
+# - Construye la imagen completa
+# ====================================================================
+
+# 7. Esperar y luego verificar contenedores
+docker ps
+
+# 8. Verificar versión de PHP en el contenedor
+docker exec laravel_api_backend php -v
+# Debería mostrar: PHP 8.2.x
+
+# 9. Probar el health check
+curl http://localhost:8000/api/health
+
+# 10. Probar desde la red
+curl http://192.168.1.24:8000/api/health
+
+# ====================================================================
+# RESPUESTA ESPERADA:
+# {
+#   "status": "ok",
+#   "message": "API is running",
+#   "timestamp": "2025-10-28T...",
+#   "environment": "production"
+# }
+# ====================================================================
+
+# ====================================================================
+# SI AÚN TIENES PROBLEMAS CON COMPOSER:
+# ====================================================================
+
+# Opción A: Eliminar composer.lock y reconstruir
+cd ~/FullControl-api
+rm composer.lock
+docker-compose -f docker-compose.prod.yml build --no-cache
+docker-compose -f docker-compose.prod.yml up -d
+
+# Opción B: Ver logs de construcción detallados
+docker-compose -f docker-compose.prod.yml build --progress=plain
+
+# Opción C: Entrar al contenedor y debuggear
+docker exec -it laravel_api_backend bash
+php -v
+composer diagnose
+composer show
+
+# ====================================================================
+# COMANDOS ÚTILES POST-DESPLIEGUE:
+# ====================================================================
+
+# Ver logs en tiempo real
+docker logs -f laravel_api_backend
+
+# Verificar dependencias de PHP instaladas
+docker exec laravel_api_backend php -m
+
+# Ver paquetes de composer instalados
+docker exec laravel_api_backend composer show
+
+# Ejecutar comandos artisan
+docker exec laravel_api_backend php artisan list
+
+# Reiniciar servicios
+docker-compose -f docker-compose.prod.yml restart
+
+# Menú de administración interactivo
+bash scripts/manage.sh
+
+# ====================================================================
+# VERIFICACIÓN COMPLETA:
+# ====================================================================
+
+# 1. PHP Version
+docker exec laravel_api_backend php -v | grep "PHP 8.2"
+
+# 2. Extensiones PHP
+docker exec laravel_api_backend php -m | grep -E "pdo_mysql|mbstring|gd"
+
+# 3. Composer packages
+docker exec laravel_api_backend composer show | grep laravel/framework
+
+# 4. API Health
+curl -s http://192.168.1.24:8000/api/health | jq .
+
+# 5. API Test (CORS)
+curl -s http://192.168.1.24:8000/api/test | jq .
+
+# ====================================================================
+# Si todo está OK, deberías ver:
+# ✅ PHP 8.2.x instalado
+# ✅ Todas las extensiones PHP funcionando
+# ✅ Laravel 10.x instalado
+# ✅ API respondiendo en puerto 8000
+# ✅ CORS configurado correctamente
+# ====================================================================
+

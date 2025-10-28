@@ -1,5 +1,5 @@
-# Use PHP 8.1 with Apache
-FROM php:8.1-apache
+# Use PHP 8.2 with Apache
+FROM php:8.2-apache
 
 # Set working directory
 WORKDIR /var/www/html
@@ -63,7 +63,15 @@ RUN echo '<VirtualHost *:80>\n\
     LogLevel warn\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
-# Copy application files
+# Copy composer files first for better caching
+COPY composer.json composer.lock ./
+
+# Install PHP dependencies (update lock file if needed for PHP version compatibility)
+RUN composer install --no-dev --optimize-autoloader --no-interaction || \
+    (composer update --no-dev --optimize-autoloader --no-interaction && \
+     composer install --no-dev --optimize-autoloader --no-interaction)
+
+# Copy rest of application files
 COPY . /var/www/html
 
 # Set proper permissions
@@ -71,9 +79,6 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache
-
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Expose port 80
 EXPOSE 80
