@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_app_local
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - ./storage:/var/www/html/storage
+    ports:
+      - "8000:80"  # Solo acceso local
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:8000
+    depends_on:
+      - db
+      - redis
+    networks:
+      - laravel
+
+  db:
+    image: mysql:8.0
+    container_name: laravel_db_local
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: laravel
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"  # Solo acceso local
+    networks:
+      - laravel
+
+  redis:
+    image: redis:7-alpine
+    container_name: laravel_redis_local
+    restart: unless-stopped
+    ports:
+      - "6379:6379"  # Solo acceso local
+    networks:
+      - laravel
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: laravel_mailpit_local
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP local
+      - "8025:8025"  # Web UI local
+    networks:
+      - laravel
+
+  node:
+    image: node:18-alpine
+    container_name: laravel_node_local
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "5173:5173"  # Vite dev server local
+    networks:
+      - laravel
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  laravel:
+    driver: bridge

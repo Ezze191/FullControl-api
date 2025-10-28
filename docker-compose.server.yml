@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_app_server
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - ./storage:/var/www/html/storage
+    ports:
+      - "80:80"      # Puerto 80 para acceso externo
+      - "443:443"    # Puerto 443 para HTTPS (opcional)
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=http://0.0.0.0
+    depends_on:
+      - db
+      - redis
+    networks:
+      - laravel_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  db:
+    image: mysql:8.0
+    container_name: laravel_db_server
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword123}
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: ${DB_PASSWORD:-laravelpassword123}
+    volumes:
+      - db_data_server:/var/lib/mysql
+      - ./database/backups:/var/lib/mysql/backups
+    ports:
+      - "3306:3306"  # Acceso externo a MySQL (opcional, remover en producción)
+    networks:
+      - laravel_network
+    command: --default-authentication-plugin=mysql_native_password
+
+  redis:
+    image: redis:7-alpine
+    container_name: laravel_redis_server
+    restart: unless-stopped
+    ports:
+      - "6379:6379"  # Acceso externo a Redis (opcional, remover en producción)
+    networks:
+      - laravel_network
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data_server:/data
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: laravel_mailpit_server
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - laravel_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: laravel_nginx_server
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - laravel_network
+
+volumes:
+  db_data_server:
+    driver: local
+  redis_data_server:
+    driver: local
+
+networks:
+  laravel_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
