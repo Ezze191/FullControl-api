@@ -1,66 +1,280 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🚀 Laravel API Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Backend API REST desarrollado con Laravel para comunicarse con aplicaciones frontend (Angular, React, Vue, etc.)
 
-## About Laravel
+## 📋 Características
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- ✅ API REST completa
+- ✅ CORS configurado para peticiones cross-origin
+- ✅ Dockerizado para fácil despliegue
+- ✅ Configuración para producción en Ubuntu Server
+- ✅ Health check y endpoints de prueba
+- ✅ MySQL + Redis incluidos
+- ✅ Scripts de administración automatizados
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🎯 Configuración del Servidor
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **IP del Servidor:** 192.168.1.24
+- **Puerto API:** 8000
+- **URL API:** http://192.168.1.24:8000/api
 
-## Learning Laravel
+## 🚀 Inicio Rápido
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Desarrollo Local (Windows con XAMPP)
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```bash
+# Instalar dependencias
+composer install
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+# Configurar .env
+cp .env.example .env
+php artisan key:generate
 
-## Laravel Sponsors
+# Migrar base de datos
+php artisan migrate
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+# Iniciar servidor
+php artisan serve
+```
 
-### Premium Partners
+### Producción (Ubuntu Server)
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+```bash
+# 1. Clonar repositorio
+git clone <tu-repositorio> /opt/laravel-api
+cd /opt/laravel-api
 
-## Contributing
+# 2. Verificar sistema
+bash check-system.sh
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# 3. Configurar variables
+cp .env.production.example .env
+nano .env  # Cambiar contraseñas
 
-## Code of Conduct
+# 4. Desplegar automáticamente
+bash deploy.sh
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 📚 Documentación Completa
 
-## Security Vulnerabilities
+- **[INSTRUCCIONES_DESPLIEGUE.md](INSTRUCCIONES_DESPLIEGUE.md)** - Guía paso a paso para desplegar en Ubuntu
+- **[README.DEPLOY.md](README.DEPLOY.md)** - Documentación completa de despliegue
+- **[RESUMEN_CONFIGURACION.md](RESUMEN_CONFIGURACION.md)** - Resumen de archivos y configuraciones
+- **[angular-example/README.md](angular-example/README.md)** - Integración con Angular
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🛠️ Scripts Disponibles
 
-## License
+### Administración Interactiva
+```bash
+bash scripts/manage.sh
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Menú con opciones para:
+- Iniciar/detener servicios
+- Ver logs
+- Ejecutar migraciones
+- Limpiar caché
+- Backup de base de datos
+- Y más...
+
+### Verificación del Sistema
+```bash
+bash check-system.sh
+```
+
+Verifica:
+- Sistema operativo
+- RAM y espacio en disco
+- Docker y Docker Compose
+- Puertos disponibles
+- Archivos necesarios
+
+### Pruebas de API
+```bash
+bash scripts/test-api.sh
+```
+
+Prueba:
+- Health check
+- CORS
+- Conectividad
+- Endpoints
+
+## 🌐 Endpoints Disponibles
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/health` | Estado del servidor |
+| GET | `/api/test` | Prueba de CORS y conectividad |
+| GET | `/api/user` | Usuario autenticado (requiere auth) |
+
+**Agrega tus propios endpoints en:** `routes/api.php`
+
+## 🎨 Integración con Angular
+
+### 1. Configurar Environment
+
+```typescript
+// src/environments/environment.ts
+export const environment = {
+  production: true,
+  apiUrl: 'http://192.168.1.24:8000/api'
+};
+```
+
+### 2. Copiar Servicio API
+
+Copia `angular-example/api.service.ts` a tu proyecto Angular.
+
+### 3. Usar el Servicio
+
+```typescript
+import { ApiService } from './services/api.service';
+
+constructor(private apiService: ApiService) {}
+
+ngOnInit() {
+  // Verificar conexión
+  this.apiService.healthCheck().subscribe(
+    response => console.log('Backend conectado:', response)
+  );
+  
+  // Obtener datos
+  this.apiService.get('items').subscribe(
+    data => console.log('Datos:', data)
+  );
+}
+```
+
+Ver [angular-example/README.md](angular-example/README.md) para más ejemplos.
+
+## 🔧 Comandos Útiles
+
+### Docker
+
+```bash
+# Ver logs
+docker logs -f laravel_api_backend
+
+# Ver estado
+docker-compose -f docker-compose.prod.yml ps
+
+# Reiniciar
+docker-compose -f docker-compose.prod.yml restart
+
+# Detener
+docker-compose -f docker-compose.prod.yml down
+
+# Entrar al contenedor
+docker exec -it laravel_api_backend bash
+```
+
+### Artisan
+
+```bash
+# Ejecutar migraciones
+docker exec laravel_api_backend php artisan migrate
+
+# Limpiar caché
+docker exec laravel_api_backend php artisan cache:clear
+
+# Ver rutas
+docker exec laravel_api_backend php artisan route:list
+
+# Crear controlador
+docker exec laravel_api_backend php artisan make:controller NombreController --api
+```
+
+### Base de Datos
+
+```bash
+# Backup
+docker exec laravel_api_db mysqldump -u laravel -pPASSWORD laravel > backup.sql
+
+# Restaurar
+docker exec -i laravel_api_db mysql -u laravel -pPASSWORD laravel < backup.sql
+
+# Acceder a MySQL
+docker exec -it laravel_api_db mysql -u laravel -pPASSWORD laravel
+```
+
+## 🐛 Solución de Problemas
+
+### Angular no puede conectarse
+
+```bash
+# 1. Verificar que el backend esté corriendo
+docker ps | grep laravel_api_backend
+
+# 2. Probar el health check
+curl http://192.168.1.24:8000/api/health
+
+# 3. Verificar firewall
+sudo ufw status
+sudo ufw allow 8000/tcp
+
+# 4. Ver logs
+docker logs laravel_api_backend
+```
+
+### Error de base de datos
+
+```bash
+# Ver logs de MySQL
+docker logs laravel_api_db
+
+# Probar conexión
+docker exec laravel_api_backend php artisan tinker
+>>> DB::connection()->getPdo();
+```
+
+### Error de permisos
+
+```bash
+docker exec laravel_api_backend chown -R www-data:www-data /var/www/html/storage
+docker exec laravel_api_backend chmod -R 775 /var/www/html/storage
+```
+
+Ver [README.DEPLOY.md](README.DEPLOY.md) para más soluciones.
+
+## 📊 Arquitectura
+
+```
+Cliente (Navegador/Angular)
+         ↓
+    192.168.1.24:8000 (Laravel API)
+         ↓
+    Docker Container
+         ↓
+    MySQL + Redis
+```
+
+## 🔒 Seguridad
+
+- ✅ CORS configurado
+- ✅ Firewall UFW
+- ✅ MySQL y Redis solo localmente
+- ✅ Variables de entorno protegidas
+- ⚠️ **IMPORTANTE:** Cambiar contraseñas predeterminadas en `.env`
+
+## 🤝 Contribuir
+
+1. Fork el proyecto
+2. Crea una rama: `git checkout -b feature/nueva-caracteristica`
+3. Commit cambios: `git commit -m 'Agregar nueva característica'`
+4. Push a la rama: `git push origin feature/nueva-caracteristica`
+5. Abre un Pull Request
+
+## 📝 Licencia
+
+Este proyecto es privado y propietario.
+
+## 📞 Contacto
+
+Para soporte o consultas, revisa la documentación en:
+- [INSTRUCCIONES_DESPLIEGUE.md](INSTRUCCIONES_DESPLIEGUE.md)
+- [README.DEPLOY.md](README.DEPLOY.md)
+
+---
+
+**Desarrollado con ❤️ usando Laravel y Docker**

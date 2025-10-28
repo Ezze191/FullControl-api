@@ -19,16 +19,23 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => [
+        env('FRONTEND_URL', 'http://192.168.1.24:4200'),
+        'http://192.168.1.24:4200',
+        'http://localhost:4200',
+        '*', // Permitir todos los orígenes (para desarrollo)
+    ],
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        '/^http:\/\/192\.168\.1\.\d+:\d+$/', // Cualquier IP en la red local
+    ],
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
+    'exposed_headers' => ['Authorization'],
 
-    'max_age' => 0,
+    'max_age' => 86400, // 24 horas
 
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 
 ];

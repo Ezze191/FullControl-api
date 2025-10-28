@@ -16,13 +16,8 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libfreetype6-dev \
     libjpeg62-turbo-dev \
-    libmcrypt-dev \
     libgd-dev \
-    jpegoptim optipng pngquant gifsicle \
     vim \
-    unzip \
-    git \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
@@ -33,29 +28,39 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Install Node.js and npm
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs
+# Enable Apache modules for API
+RUN a2enmod rewrite headers
 
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
-
-# Configure Apache for local development
+# Configure Apache for API backend
 RUN echo '<VirtualHost *:80>\n\
     ServerName localhost\n\
     DocumentRoot /var/www/html/public\n\
+    \n\
     <Directory /var/www/html/public>\n\
         AllowOverride All\n\
         Require all granted\n\
         Options -Indexes +FollowSymLinks\n\
+        \n\
+        # Enable CORS headers\n\
+        Header always set Access-Control-Allow-Origin "*"\n\
+        Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS, PATCH"\n\
+        Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Accept, Origin"\n\
+        Header always set Access-Control-Max-Age "3600"\n\
+        \n\
+        # Handle preflight requests\n\
+        RewriteEngine On\n\
+        RewriteCond %{REQUEST_METHOD} OPTIONS\n\
+        RewriteRule ^(.*)$ $1 [R=200,L]\n\
     </Directory>\n\
+    \n\
     <Directory /var/www/html>\n\
         AllowOverride All\n\
         Require all granted\n\
     </Directory>\n\
+    \n\
     ErrorLog ${APACHE_LOG_DIR}/error.log\n\
     CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
-    LogLevel info\n\
+    LogLevel warn\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 # Copy application files
@@ -70,82 +75,15 @@ RUN chown -R www-data:www-data /var/www/html \
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Install Node.js dependencies and build assets
-RUN npm install && npm run build
+# Copy environment file if not exists
+COPY .env.production .env.example
 
-# Create .env file if it doesn't exist
-RUN if [ ! -f .env ]; then \
-    echo "APP_NAME=Laravel" > .env && \
-    echo "APP_ENV=local" >> .env && \
-    echo "APP_KEY=" >> .env && \
-    echo "APP_DEBUG=true" >> .env && \
-    echo "APP_URL=http://localhost:8000" >> .env && \
-    echo "" >> .env && \
-    echo "LOG_CHANNEL=stack" >> .env && \
-    echo "LOG_DEPRECATIONS_CHANNEL=null" >> .env && \
-    echo "LOG_LEVEL=debug" >> .env && \
-    echo "" >> .env && \
-    echo "DB_CONNECTION=mysql" >> .env && \
-    echo "DB_HOST=db" >> .env && \
-    echo "DB_PORT=3306" >> .env && \
-    echo "DB_DATABASE=laravel" >> .env && \
-    echo "DB_USERNAME=laravel" >> .env && \
-    echo "DB_PASSWORD=laravel" >> .env && \
-    echo "" >> .env && \
-    echo "BROADCAST_DRIVER=log" >> .env && \
-    echo "CACHE_DRIVER=file" >> .env && \
-    echo "FILESYSTEM_DISK=local" >> .env && \
-    echo "QUEUE_CONNECTION=sync" >> .env && \
-    echo "SESSION_DRIVER=file" >> .env && \
-    echo "SESSION_LIFETIME=120" >> .env && \
-    echo "" >> .env && \
-    echo "MEMCACHED_HOST=127.0.0.1" >> .env && \
-    echo "" >> .env && \
-    echo "REDIS_HOST=127.0.0.1" >> .env && \
-    echo "REDIS_PASSWORD=null" >> .env && \
-    echo "REDIS_PORT=6379" >> .env && \
-    echo "" >> .env && \
-    echo "MAIL_MAILER=smtp" >> .env && \
-    echo "MAIL_HOST=mailpit" >> .env && \
-    echo "MAIL_PORT=1025" >> .env && \
-    echo "MAIL_USERNAME=null" >> .env && \
-    echo "MAIL_PASSWORD=null" >> .env && \
-    echo "MAIL_ENCRYPTION=null" >> .env && \
-    echo "MAIL_FROM_ADDRESS=\"hello@example.com\"" >> .env && \
-    echo "MAIL_FROM_NAME=\"\${APP_NAME}\"" >> .env && \
-    echo "" >> .env && \
-    echo "AWS_ACCESS_KEY_ID=" >> .env && \
-    echo "AWS_SECRET_ACCESS_KEY=" >> .env && \
-    echo "AWS_DEFAULT_REGION=us-east-1" >> .env && \
-    echo "AWS_BUCKET=" >> .env && \
-    echo "AWS_USE_PATH_STYLE_ENDPOINT=false" >> .env && \
-    echo "" >> .env && \
-    echo "PUSHER_APP_ID=" >> .env && \
-    echo "PUSHER_APP_KEY=" >> .env && \
-    echo "PUSHER_APP_SECRET=" >> .env && \
-    echo "PUSHER_HOST=" >> .env && \
-    echo "PUSHER_PORT=443" >> .env && \
-    echo "PUSHER_SCHEME=https" >> .env && \
-    echo "PUSHER_APP_CLUSTER=mt1" >> .env && \
-    echo "" >> .env && \
-    echo "VITE_PUSHER_APP_KEY=\"\${PUSHER_APP_KEY}\"" >> .env && \
-    echo "VITE_PUSHER_HOST=\"\${PUSHER_HOST}\"" >> .env && \
-    echo "VITE_PUSHER_PORT=\"\${PUSHER_PORT}\"" >> .env && \
-    echo "VITE_PUSHER_SCHEME=\"\${PUSHER_SCHEME}\"" >> .env && \
-    echo "VITE_PUSHER_APP_CLUSTER=\"\${PUSHER_APP_CLUSTER}\"" >> .env; \
-fi
-
-# Generate application key
-RUN php artisan key:generate --force
-
-# Clear and cache config
-RUN php artisan config:clear && \
-    php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache
-
-# Expose port 80 for local access
+# Expose port 80
 EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
+    CMD curl -f http://localhost/api/health || exit 1
 
 # Start Apache
 CMD ["apache2-foreground"]

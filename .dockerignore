@@ -1,63 +1,33 @@
-# Git
 .git
 .gitignore
 .gitattributes
-
-# Docker
-Dockerfile
-.dockerignore
-docker-compose*.yml
-
-# Documentation
-README.md
+.env
+.env.*
+!.env.production
+!.env.example
+node_modules
+npm-debug.log
+vendor
+storage/app/*
+!storage/app/.gitignore
+!storage/app/public
+storage/framework/cache/*
+!storage/framework/cache/.gitignore
+storage/framework/sessions/*
+!storage/framework/sessions/.gitignore
+storage/framework/views/*
+!storage/framework/views/.gitignore
+storage/logs/*
+!storage/logs/.gitignore
+bootstrap/cache/*
+!bootstrap/cache/.gitignore
+tests
+.phpunit.result.cache
 *.md
-
-# IDE
+!README.md
+docker-compose.yml
+docker-compose.*.yml
+Dockerfile
 .vscode
 .idea
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
 *.log
-storage/logs/*
-!storage/logs/.gitkeep
-
-# Cache
-storage/framework/cache/*
-!storage/framework/cache/.gitkeep
-storage/framework/sessions/*
-!storage/framework/sessions/.gitkeep
-storage/framework/views/*
-!storage/framework/views/.gitkeep
-
-# Environment
-.env
-.env.local
-.env.*.local
-
-# Dependencies
-node_modules
-vendor
-
-# Build artifacts
-public/hot
-public/storage
-public/build
-
-# Testing
-tests
-phpunit.xml
-.phpunit.result.cache
-
-# Coverage
-coverage
-
-# Temporary files
-tmp
-temp

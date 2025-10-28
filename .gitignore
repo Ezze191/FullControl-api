@@ -1,0 +1,52 @@
+# Laravel
+/node_modules
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+docker-compose.override.yml
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+/.idea
+/.vscode
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Laravel specific
+storage/framework/cache/*
+!storage/framework/cache/.gitignore
+storage/framework/sessions/*
+!storage/framework/sessions/.gitignore
+storage/framework/views/*
+!storage/framework/views/.gitignore
+storage/logs/*
+!storage/logs/.gitignore
+bootstrap/cache/*
+!bootstrap/cache/.gitignore
+
+# Docker
+docker/mysql/data/
+
+# Backups
+*.sql
+backup_*.sql
+
+# Logs
+*.log
+
+# Testing
+/coverage
+/.phpunit.cache
+
+# Allow example files
+!.env.example
+!.env.production.example
+
