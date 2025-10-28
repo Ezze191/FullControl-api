@@ -66,11 +66,14 @@ RUN echo '<VirtualHost *:80>\n\
 # Copy composer.json first
 COPY composer.json ./
 
-# Generate fresh composer.lock with PHP 8.2 and install dependencies
-RUN composer update --no-dev --optimize-autoloader --no-interaction
+# Generate fresh composer.lock with PHP 8.2 and install dependencies (without scripts)
+RUN composer update --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Copy rest of application files
 COPY . /var/www/html
+
+# Run composer scripts after all files are in place
+RUN composer dump-autoload --optimize
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html \

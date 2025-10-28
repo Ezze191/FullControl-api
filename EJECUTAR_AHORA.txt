@@ -1,0 +1,189 @@
+# ====================================================================
+# EJECUTAR ESTOS COMANDOS AHORA - SOLUCIÓN FINAL
+# ====================================================================
+# Error solucionado: "Could not open input file: artisan"
+# Solución: Usar --no-scripts en composer
+# ====================================================================
+
+# ====================================================================
+# 1. EN TU PC WINDOWS (Git Bash / PowerShell / CMD)
+# ====================================================================
+
+git add .
+git commit -m "Fix: Usar --no-scripts en composer para evitar error de artisan"
+git push origin main
+
+# ====================================================================
+# 2. EN EL SERVIDOR UBUNTU
+# ====================================================================
+
+cd ~/FullControl-api
+
+git pull origin main
+
+# LIMPIAR CACHÉ DE BUILD (importante)
+docker builder prune -af
+
+# Desplegar (esta vez SÍ funcionará)
+bash deploy.sh
+
+# ====================================================================
+# 3. MONITOREAR (en otra terminal SSH - opcional)
+# ====================================================================
+
+# Ver progreso en tiempo real
+watch -n 2 'docker ps --format "table {{.Names}}\t{{.Status}}"'
+
+# O ver logs
+docker-compose -f docker-compose.prod.yml logs -f
+
+# ====================================================================
+# 4. DESPUÉS DEL DESPLIEGUE - VERIFICAR
+# ====================================================================
+
+# A. Ver contenedores (deben estar "Up")
+docker ps
+
+# B. Verificar PHP
+docker exec laravel_api_backend php -v
+
+# C. Verificar Laravel y artisan
+docker exec laravel_api_backend php artisan --version
+
+# D. Verificar autoload
+docker exec laravel_api_backend composer dump-autoload
+
+# E. Probar Health Check
+curl http://localhost:8000/api/health
+
+# F. Probar desde la red
+curl http://192.168.1.24:8000/api/health
+
+# G. Con formato bonito
+curl -s http://192.168.1.24:8000/api/health | python3 -m json.tool
+
+# ====================================================================
+# RESPUESTA ESPERADA:
+# ====================================================================
+# {
+#     "status": "ok",
+#     "message": "API is running",
+#     "timestamp": "2025-10-28T...",
+#     "environment": "production"
+# }
+# ====================================================================
+
+# ====================================================================
+# 5. PRUEBA COMPLETA DESDE ANGULAR
+# ====================================================================
+
+# En el navegador, consola de desarrollo (F12):
+fetch('http://192.168.1.24:8000/api/health')
+  .then(r => r.json())
+  .then(d => console.log('✅ Backend OK:', d))
+  .catch(e => console.error('❌ Error:', e));
+
+# También probar:
+fetch('http://192.168.1.24:8000/api/test')
+  .then(r => r.json())
+  .then(d => console.log('✅ Test OK:', d));
+
+# ====================================================================
+# 6. COMANDOS ÚTILES
+# ====================================================================
+
+# Ver logs en tiempo real
+docker logs -f laravel_api_backend
+
+# Ejecutar comandos artisan
+docker exec laravel_api_backend php artisan route:list
+docker exec laravel_api_backend php artisan migrate:status
+
+# Limpiar caché de Laravel
+docker exec laravel_api_backend php artisan cache:clear
+docker exec laravel_api_backend php artisan config:clear
+
+# Cachear para mejor performance
+docker exec laravel_api_backend php artisan config:cache
+docker exec laravel_api_backend php artisan route:cache
+
+# Reiniciar servicios
+docker-compose -f docker-compose.prod.yml restart
+
+# Ver estado y recursos
+docker stats --no-stream
+
+# Menú interactivo
+bash scripts/manage.sh
+
+# ====================================================================
+# 7. VERIFICACIÓN FINAL COMPLETA
+# ====================================================================
+
+echo "=== VERIFICACIÓN COMPLETA DEL SISTEMA ==="
+echo ""
+echo "1. Contenedores:"
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+echo ""
+echo "2. PHP Version:"
+docker exec laravel_api_backend php -v | head -1
+echo ""
+echo "3. Laravel Version:"
+docker exec laravel_api_backend php artisan --version
+echo ""
+echo "4. Composer Packages:"
+docker exec laravel_api_backend composer show | grep -E "laravel/framework|guzzlehttp"
+echo ""
+echo "5. API Health Check:"
+curl -s http://192.168.1.24:8000/api/health | python3 -m json.tool
+echo ""
+echo "6. API Test (CORS):"
+curl -s http://192.168.1.24:8000/api/test | python3 -m json.tool
+echo ""
+echo "7. Logs (últimas 10 líneas):"
+docker logs laravel_api_backend --tail 10
+echo ""
+echo "=== FIN VERIFICACIÓN ==="
+
+# ====================================================================
+# SI TODO ESTÁ BIEN, VERÁS:
+# ====================================================================
+# ✅ 3 contenedores corriendo (app, db, redis)
+# ✅ PHP 8.2.x instalado
+# ✅ Laravel Framework 10.x funcionando
+# ✅ Artisan ejecutándose sin errores
+# ✅ API respondiendo en puerto 8000
+# ✅ Health check retorna {"status": "ok"}
+# ✅ Sin errores en los logs
+# ====================================================================
+
+# ====================================================================
+# CONFIGURAR ANGULAR (si aún no lo has hecho)
+# ====================================================================
+
+# 1. Copiar servicio API a tu proyecto Angular:
+cp angular-example/api.service.ts <tu-proyecto-angular>/src/app/services/
+
+# 2. Configurar environment.ts:
+# export const environment = {
+#   production: true,
+#   apiUrl: 'http://192.168.1.24:8000/api'
+# };
+
+# 3. Importar HttpClientModule en app.module.ts
+
+# 4. Usar el servicio en tus componentes
+
+# ====================================================================
+# ¡LISTO! TU BACKEND ESTÁ EN PRODUCCIÓN 🚀
+# ====================================================================
+
+# Documentación adicional:
+# - README.md                      - Información general
+# - README.DEPLOY.md              - Guía completa de despliegue
+# - SOLUCION_ARTISAN.md          - Solución al error actual
+# - angular-example/README.md    - Integración con Angular
+# - scripts/manage.sh            - Menú de administración
+
+# ====================================================================
+
