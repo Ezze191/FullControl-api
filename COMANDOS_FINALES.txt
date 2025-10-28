@@ -1,0 +1,217 @@
+# ====================================================================
+# COMANDOS FINALES - SOLUCIÓN DEFINITIVA
+# ====================================================================
+# Problema: composer.lock generado con PHP 8.1 incompatible con PHP 8.2
+# Solución: Regenerar composer.lock dentro de Docker con PHP 8.2
+# ====================================================================
+
+# ====================================================================
+# PASO 1: EN TU PC WINDOWS (GIT BASH o PowerShell)
+# ====================================================================
+
+git add .
+git commit -m "Fix: Regenerar composer.lock en Docker con PHP 8.2"
+git push origin main
+
+# ====================================================================
+# PASO 2: EN EL SERVIDOR UBUNTU
+# ====================================================================
+
+# A. Ir al directorio
+cd ~/FullControl-api
+
+# B. Pull de cambios
+git pull origin main
+
+# C. LIMPIAR TODO DOCKER (IMPORTANTE)
+docker-compose -f docker-compose.prod.yml down -v
+docker system prune -af
+docker volume prune -f
+docker builder prune -af
+
+# D. Verificar cambios en Dockerfile
+cat Dockerfile | grep -A 3 "Copy composer"
+# Deberías ver:
+#   COPY composer.json ./
+#   RUN composer update...
+
+# E. Verificar .dockerignore
+cat .dockerignore | grep composer.lock
+# Debería mostrar: composer.lock
+
+# F. DESPLEGAR (tomará 15-20 minutos)
+bash deploy.sh
+
+# ====================================================================
+# MONITOREAR EL PROGRESO
+# ====================================================================
+
+# En otra terminal SSH, ver logs en tiempo real:
+docker-compose -f docker-compose.prod.yml logs -f app
+
+# O ver el build:
+docker-compose -f docker-compose.prod.yml build --progress=plain
+
+# ====================================================================
+# PASO 3: VERIFICACIÓN
+# ====================================================================
+
+# A. Ver contenedores corriendo
+docker ps
+
+# Deberías ver:
+# laravel_api_backend    (corriendo)
+# laravel_api_db         (corriendo)  
+# laravel_api_redis      (corriendo)
+
+# B. Verificar PHP 8.2
+docker exec laravel_api_backend php -v
+
+# Esperado: PHP 8.2.x (cli)
+
+# C. Verificar Laravel
+docker exec laravel_api_backend php artisan --version
+
+# Esperado: Laravel Framework 10.x
+
+# D. Ver dependencias instaladas
+docker exec laravel_api_backend composer show | head -20
+
+# E. Probar API - Health Check
+curl http://localhost:8000/api/health
+
+# F. Probar desde la red
+curl http://192.168.1.24:8000/api/health
+
+# G. Probar con formato bonito
+curl -s http://192.168.1.24:8000/api/health | jq .
+
+# RESPUESTA ESPERADA:
+# {
+#   "status": "ok",
+#   "message": "API is running",
+#   "timestamp": "2025-10-28T...",
+#   "environment": "production"
+# }
+
+# H. Probar endpoint de test (CORS)
+curl -s http://192.168.1.24:8000/api/test | jq .
+
+# I. Ver logs (no debería haber errores)
+docker logs laravel_api_backend | tail -50
+
+# ====================================================================
+# PASO 4: PROBAR DESDE ANGULAR
+# ====================================================================
+
+# Desde tu navegador, abre la consola (F12) y ejecuta:
+fetch('http://192.168.1.24:8000/api/health')
+  .then(res => res.json())
+  .then(data => console.log('✅ API OK:', data))
+  .catch(err => console.error('❌ Error:', err));
+
+# ====================================================================
+# COMANDOS ÚTILES POST-DESPLIEGUE
+# ====================================================================
+
+# Menú interactivo de administración
+bash scripts/manage.sh
+
+# Ver logs en tiempo real
+docker logs -f laravel_api_backend
+
+# Reiniciar servicios
+docker-compose -f docker-compose.prod.yml restart
+
+# Detener servicios
+docker-compose -f docker-compose.prod.yml down
+
+# Ver uso de recursos
+docker stats
+
+# Ejecutar migraciones
+docker exec laravel_api_backend php artisan migrate
+
+# Limpiar caché
+docker exec laravel_api_backend php artisan cache:clear
+
+# Ver rutas disponibles
+docker exec laravel_api_backend php artisan route:list
+
+# Backup de base de datos
+docker exec laravel_api_db mysqldump -u laravel -p laravel > backup_$(date +%Y%m%d).sql
+
+# ====================================================================
+# SOLUCIÓN DE PROBLEMAS
+# ====================================================================
+
+# Si el build sigue fallando, ver logs detallados:
+docker-compose -f docker-compose.prod.yml build --progress=plain 2>&1 | tee build.log
+
+# Si hay problemas con composer, entrar al contenedor:
+docker run -it --rm -v $(pwd):/app -w /app php:8.2-apache bash
+# Dentro:
+apt-get update && apt-get install -y git zip unzip
+curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+composer update --no-dev
+
+# Limpiar absolutamente todo:
+docker-compose -f docker-compose.prod.yml down -v
+docker system prune -af --volumes
+docker builder prune -af
+docker volume prune -f
+rm -rf storage/framework/cache/*
+rm -rf storage/framework/sessions/*
+rm -rf storage/framework/views/*
+bash deploy.sh
+
+# Ver qué archivos se están copiando al contenedor:
+docker build --no-cache -t test . 2>&1 | grep "transferring"
+
+# ====================================================================
+# VERIFICACIÓN COMPLETA FINAL
+# ====================================================================
+
+echo "=== VERIFICACIÓN COMPLETA ==="
+echo ""
+
+echo "1. Contenedores:"
+docker ps --format "table {{.Names}}\t{{.Status}}"
+echo ""
+
+echo "2. PHP Version:"
+docker exec laravel_api_backend php -v | grep "PHP"
+echo ""
+
+echo "3. Laravel Version:"
+docker exec laravel_api_backend php artisan --version
+echo ""
+
+echo "4. Extensiones PHP:"
+docker exec laravel_api_backend php -m | grep -E "pdo_mysql|mbstring|gd|zip"
+echo ""
+
+echo "5. API Health:"
+curl -s http://192.168.1.24:8000/api/health | jq .
+echo ""
+
+echo "6. API Test:"
+curl -s http://192.168.1.24:8000/api/test | jq .
+echo ""
+
+echo "=== FIN VERIFICACIÓN ==="
+
+# ====================================================================
+# SI TODO ESTÁ OK, VERÁS:
+# ====================================================================
+# ✅ 3 contenedores corriendo
+# ✅ PHP 8.2.x
+# ✅ Laravel 10.x
+# ✅ Todas las extensiones instaladas
+# ✅ API responde en http://192.168.1.24:8000
+# ✅ Health check retorna {"status": "ok"}
+# ✅ CORS configurado y funcionando
+# ====================================================================
+
+# ¡LISTO PARA PRODUCCIÓN! 🚀
+

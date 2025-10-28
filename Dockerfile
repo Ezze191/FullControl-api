@@ -63,13 +63,11 @@ RUN echo '<VirtualHost *:80>\n\
     LogLevel warn\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
-# Copy composer files first for better caching
-COPY composer.json composer.lock ./
+# Copy composer.json first
+COPY composer.json ./
 
-# Install PHP dependencies (update lock file if needed for PHP version compatibility)
-RUN composer install --no-dev --optimize-autoloader --no-interaction || \
-    (composer update --no-dev --optimize-autoloader --no-interaction && \
-     composer install --no-dev --optimize-autoloader --no-interaction)
+# Generate fresh composer.lock with PHP 8.2 and install dependencies
+RUN composer update --no-dev --optimize-autoloader --no-interaction
 
 # Copy rest of application files
 COPY . /var/www/html
