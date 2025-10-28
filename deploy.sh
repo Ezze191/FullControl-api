@@ -64,8 +64,59 @@ fi
 
 # Crear archivo .env si no existe
 if [ ! -f .env ]; then
-    print_warning "Archivo .env no encontrado. Creando desde .env.production..."
-    cp .env.production .env
+    print_warning "Archivo .env no encontrado. Creando desde plantilla..."
+    
+    # Intentar copiar desde diferentes fuentes
+    if [ -f "env.production.example" ]; then
+        cp env.production.example .env
+    elif [ -f ".env.production.example" ]; then
+        cp .env.production.example .env
+    elif [ -f ".env.example" ]; then
+        cp .env.example .env
+    else
+        print_error "No se encontró ningún archivo de ejemplo .env"
+        print_message "Creando .env básico..."
+        cat > .env << 'EOF'
+APP_NAME="Laravel API Backend"
+APP_ENV=production
+APP_KEY=
+APP_DEBUG=false
+APP_URL=http://192.168.1.24:8000
+
+LOG_CHANNEL=stack
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=error
+
+DB_CONNECTION=mysql
+DB_HOST=db
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=laravel
+DB_PASSWORD=laravel_secure_password_change_this
+
+BROADCAST_DRIVER=log
+CACHE_DRIVER=redis
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=redis
+SESSION_DRIVER=redis
+SESSION_LIFETIME=120
+
+REDIS_HOST=redis
+REDIS_PASSWORD=redispassword
+REDIS_PORT=6379
+
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS="noreply@example.com"
+MAIL_FROM_NAME="${APP_NAME}"
+
+FRONTEND_URL=http://192.168.1.24:4200
+EOF
+    fi
     
     # Generar APP_KEY
     print_message "Generando APP_KEY..."

@@ -75,9 +75,6 @@ RUN chown -R www-data:www-data /var/www/html \
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Copy environment file if not exists
-COPY .env.production .env.example
-
 # Expose port 80
 EXPOSE 80
 

@@ -1,0 +1,59 @@
+# ====================================================================
+# COMANDOS PARA EJECUTAR EN EL SERVIDOR UBUNTU
+# Copiar y pegar estos comandos uno por uno
+# ====================================================================
+
+# 1. Ir al directorio del proyecto
+cd ~/FullControl-api
+
+# 2. Hacer pull de los cambios corregidos
+git pull origin main
+
+# 3. Limpiar Docker (importante para evitar cache)
+docker-compose -f docker-compose.prod.yml down -v
+docker system prune -af
+
+# 4. Verificar que los archivos necesarios existen
+ls -la env.production.example
+ls -la deploy.sh
+ls -la Dockerfile
+
+# 5. Ejecutar el despliegue
+bash deploy.sh
+
+# 6. Esperar 5-10 minutos y luego verificar
+docker ps
+
+# 7. Probar el health check
+curl http://localhost:8000/api/health
+
+# 8. Probar desde la red
+curl http://192.168.1.24:8000/api/health
+
+# ====================================================================
+# Si todo funciona correctamente, deberías ver:
+# {
+#   "status": "ok",
+#   "message": "API is running",
+#   "timestamp": "...",
+#   "environment": "production"
+# }
+# ====================================================================
+
+# COMANDOS ÚTILES DESPUÉS DEL DESPLIEGUE:
+
+# Ver logs en tiempo real
+docker logs -f laravel_api_backend
+
+# Entrar al contenedor
+docker exec -it laravel_api_backend bash
+
+# Ver estado de contenedores
+docker ps
+
+# Reiniciar si es necesario
+docker-compose -f docker-compose.prod.yml restart
+
+# Usar el menú de administración
+bash scripts/manage.sh
+
