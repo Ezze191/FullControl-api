@@ -88,8 +88,10 @@ RUN echo '<VirtualHost *:80>\n\
     LogLevel warn\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
-# Copy composer manifests and install prod deps with lockfile
-COPY composer.json composer.lock ./
+# Copy composer manifests and install prod deps
+COPY composer.json ./
+COPY composer.lock ./
+# Install dependencies using lockfile for reproducible builds
 RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
 # Copy application source
