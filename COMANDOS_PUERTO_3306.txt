@@ -1,0 +1,142 @@
+# ====================================================================
+# SOLUCIÓN RÁPIDA - Puerto 3306 en Uso
+# ====================================================================
+
+# ====================================================================
+# OPCIÓN 1: NO EXPONER MYSQL (RECOMENDADO) - YA ESTÁ EN GIT
+# ====================================================================
+
+# En tu PC Windows:
+git add .
+git commit -m "Fix: No exponer puertos MySQL/Redis - solo uso interno"
+git push origin main
+
+# En el servidor Ubuntu:
+cd ~/FullControl-api
+git pull origin main
+
+# Limpiar contenedores anteriores
+docker-compose -f docker-compose.prod.yml down -v
+docker system prune -af
+
+# Desplegar
+bash deploy.sh
+
+# ====================================================================
+# OPCIÓN 2: DETENER MYSQL DEL SISTEMA (Si está instalado)
+# ====================================================================
+
+# Ver si MySQL está corriendo
+sudo systemctl status mysql
+
+# Si está corriendo, detenerlo
+sudo systemctl stop mysql
+sudo systemctl disable mysql
+
+# Verificar que se detuvo
+sudo lsof -i :3306
+# No debería mostrar nada
+
+# Ahora desplegar
+bash deploy.sh
+
+# ====================================================================
+# OPCIÓN 3: ELIMINAR CONTENEDORES ANTERIORES
+# ====================================================================
+
+# Ver todos los contenedores
+docker ps -a
+
+# Detener y eliminar contenedores MySQL
+docker stop laravel_api_db 2>/dev/null
+docker rm laravel_api_db 2>/dev/null
+
+# Limpiar todo
+docker-compose -f docker-compose.prod.yml down -v
+docker system prune -af
+docker volume prune -f
+
+# Desplegar
+bash deploy.sh
+
+# ====================================================================
+# OPCIÓN 4: VER QUÉ USA EL PUERTO
+# ====================================================================
+
+# Diagnóstico completo
+echo "=== Diagnóstico Puerto 3306 ==="
+echo ""
+
+echo "1. Procesos usando puerto 3306:"
+sudo lsof -i :3306
+echo ""
+
+echo "2. Contenedores Docker:"
+docker ps -a --filter "expose=3306"
+echo ""
+
+echo "3. Servicios MySQL del sistema:"
+sudo systemctl list-units --type=service | grep mysql
+echo ""
+
+echo "4. Todos los puertos en uso:"
+sudo netstat -tulpn | grep :3306
+echo ""
+
+# ====================================================================
+# VERIFICACIÓN POST-DESPLIEGUE
+# ====================================================================
+
+# Ver contenedores corriendo
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+# Verificar que MySQL está accesible INTERNAMENTE
+docker exec laravel_api_backend php artisan migrate:status
+
+# O con tinker
+docker exec laravel_api_backend php artisan tinker --execute="echo DB::connection()->getDatabaseName();"
+
+# Probar API
+curl http://192.168.1.24:8000/api/health
+
+# ====================================================================
+# ACCEDER A MYSQL SIN PUERTO EXPUESTO (si lo necesitas)
+# ====================================================================
+
+# Opción 1: Desde el contenedor Laravel
+docker exec -it laravel_api_backend php artisan tinker
+# Dentro de tinker:
+# >>> DB::select('SHOW DATABASES;');
+# >>> DB::select('SHOW TABLES;');
+
+# Opción 2: Directamente al contenedor MySQL
+docker exec -it laravel_api_db mysql -u laravel -plaravel_secure_password_change_this
+
+# Opción 3: Port forwarding temporal (para usar MySQL Workbench, etc)
+# En otra terminal:
+ssh -L 3307:localhost:3306 usuario@192.168.1.24
+# Luego conectar a localhost:3307 desde tu PC
+
+# Opción 4: Exponer puerto temporalmente
+docker-compose -f docker-compose.prod.yml exec db sh -c 'apt-get update && apt-get install -y socat && socat TCP-LISTEN:3307,fork TCP:localhost:3306'
+
+# ====================================================================
+# RESUMEN DE LA SOLUCIÓN
+# ====================================================================
+
+# ✅ MySQL NO expuesto al host (más seguro)
+# ✅ Laravel se conecta internamente vía red Docker
+# ✅ No hay conflictos de puertos
+# ✅ Redis tampoco expuesto (más seguro)
+# ✅ Solo puerto 8000 (API) expuesto
+
+# Arquitectura:
+# Internet/Red Local → Puerto 8000 (API Laravel)
+#                           ↓
+#                    Red Docker Interna
+#                     ↓              ↓
+#                 MySQL 3306    Redis 6379
+#               (NO expuesto)  (NO expuesto)
+
+# ====================================================================
+

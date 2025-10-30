@@ -46,8 +46,10 @@ services:
     volumes:
       - db_data:/var/lib/mysql
       - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
-    ports:
-      - "127.0.0.1:3306:3306"  # Solo accesible localmente
+    # Puerto NO expuesto - solo acceso interno desde Laravel (más seguro)
+    # Si necesitas acceso externo, descomenta y asegúrate que el puerto esté libre:
+    # ports:
+    #   - "127.0.0.1:3306:3306"
     networks:
       - laravel_network
     healthcheck:
@@ -64,8 +66,10 @@ services:
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispassword}
     volumes:
       - redis_data:/data
-    ports:
-      - "127.0.0.1:6379:6379"  # Solo accesible localmente
+    # Puerto NO expuesto - solo acceso interno desde Laravel (más seguro)
+    # Si necesitas acceso externo, descomenta y asegúrate que el puerto esté libre:
+    # ports:
+    #   - "127.0.0.1:6379:6379"
     networks:
       - laravel_network
     healthcheck:
