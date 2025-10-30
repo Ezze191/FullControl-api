@@ -103,17 +103,28 @@ COPY --from=assets /app/public/build ./public/build
 # Now run composer scripts (package discovery, etc.) and optimize autoload
 RUN composer dump-autoload --optimize && php artisan package:discover --ansi
 
-# Permissions for Laravel writable dirs
-RUN chown -R www-data:www-data /var/www/html \
-    && find storage bootstrap/cache -type d -exec chmod 775 {} \; \
-    && find storage bootstrap/cache -type f -exec chmod 664 {} \;
+# Create necessary directories and set permissions for Laravel writable dirs
+RUN mkdir -p /var/www/html/storage/logs \
+    && mkdir -p /var/www/html/storage/framework/cache/data \
+    && mkdir -p /var/www/html/storage/framework/sessions \
+    && mkdir -p /var/www/html/storage/framework/views \
+    && touch /var/www/html/storage/logs/laravel.log \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 /var/www/html/storage \
+    && chmod -R 775 /var/www/html/bootstrap/cache \
+    && chmod 664 /var/www/html/storage/logs/laravel.log
+
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Expose port 80
 EXPOSE 80
 
 # Health check (optional; path must exist in your routes)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s \
-    CMD curl -fsS http://localhost/ || exit 1
+    CMD curl -fsS http://localhost/api/health || exit 1
 
-# Start Apache
+# Use entrypoint script
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["apache2-foreground"]
