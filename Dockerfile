@@ -88,11 +88,11 @@ RUN echo '<VirtualHost *:80>\n\
     LogLevel warn\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
-# Copy composer manifests and install prod deps
+# Copy composer manifests and install prod deps (without scripts since artisan doesn't exist yet)
 COPY composer.json ./
 COPY composer.lock ./
-# Install dependencies using lockfile for reproducible builds
-RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+# Install dependencies without scripts (artisan doesn't exist yet)
+RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader --no-scripts
 
 # Copy application source
 COPY . /var/www/html
@@ -100,8 +100,8 @@ COPY . /var/www/html
 # Copy built assets from the assets stage
 COPY --from=assets /app/public/build ./public/build
 
-# Optimize autoload
-RUN composer dump-autoload --optimize
+# Now run composer scripts (package discovery, etc.) and optimize autoload
+RUN composer dump-autoload --optimize && php artisan package:discover --ansi
 
 # Permissions for Laravel writable dirs
 RUN chown -R www-data:www-data /var/www/html \
